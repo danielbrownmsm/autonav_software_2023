@@ -10,8 +10,8 @@
         <param name="preset" value="simulation" />
     </node>
     <node pkg="autonav_display" exec="broadcast.py" />
-    <node pkg="autonav_vision" exec="transformations.py" />
-    <node pkg="autonav_vision" exec="expandify" />
+    <node pkg="autonav_unet" exec="transformations.py" output="screen" />
+    <node pkg="autonav_unet" exec="expandify" />
     <node pkg="autonav_filters" exec="filters.py">
         <param name="latitude_length" value="111086.2" />
         <param name="longitude_length" value="81978.2" />
