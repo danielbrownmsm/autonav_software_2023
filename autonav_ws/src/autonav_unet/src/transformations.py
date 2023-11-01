@@ -38,12 +38,13 @@ class ImageTransformer(Node):
         self.model = tf.keras.models.load_model('/mnt/c/Users/isasq/Documents/GitHub/autonav_software_2023/autonav_ws/src/autonav_unet/src/results/SCRUNet_model')
 
     def configure(self):
-        self.cameraSubscriber = self.create_subscription(CompressedImage, "/autonav/camera/compressed", self.onImageReceived, 1)
+        self.cameraSubscriber = self.create_subscription(CompressedImage, "/autonav/camera/compressed", self.onImageReceived, 5)
         self.rawMapPublisher = self.create_publisher(OccupancyGrid, "/autonav/cfg_space/raw", 1)
         self.filteredImagePublisher = self.create_publisher(CompressedImage, "/autonav/cfg_space/raw/image", 1)
 
         self.setDeviceState(DeviceStateEnum.OPERATING)
 
+    # this is required to be here because of inheritance or something, though functionally it does nothing
     def transition(self, old, updated):
         return
 
@@ -69,6 +70,7 @@ class ImageTransformer(Node):
     def onImageReceived(self, image_: CompressedImage):
         # Decompressify
         cv_image = g_bridge.compressed_imgmsg_to_cv2(image_)
+        # cv2.imshow("input", cv_image)
 
         #======================================================
         # Histogram equalization of HSV value channel
@@ -84,7 +86,7 @@ class ImageTransformer(Node):
         # cv2.destroyAllWindows()
 
         start_time = time.time()
-        mask_ = self.model.predict(np.array([image, image], dtype=np.float32))[1]
+        mask = self.model.predict(np.array([image, image], dtype=np.float32))[0]
         # self.get_logger().error(time.time() - start_time)
 
         # print()
@@ -93,16 +95,15 @@ class ImageTransformer(Node):
 
         # self.get_logger().error(mask_.shape)
 
-        # cv2.imshow("mask", mask_)
-        # cv2.waitKey()
-        # cv2.destroyAllWindows()
+        # mask = cv2.transpose(mask_) / 255.0 
+        # mask = cv2.resize(mask, (640, 480))
 
-        mask = cv2.transpose(mask_) / 255.0 
-        mask = cv2.resize(mask, (640, 480))
+        # cv2.imshow("mask", mask)
+        # cv2.waitKey()
 
         #==========================================================
 
-        mask = self.flattenImage(mask)
+        mask = self.flattenImage(mask) #FIXME XXX HACK
 
         preview_image = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
         preview_msg = g_bridge.cv2_to_compressed_imgmsg(preview_image)
@@ -118,6 +119,7 @@ def main():
     rclpy.init()
     rclpy.spin(ImageTransformer())
     rclpy.shutdown()
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
