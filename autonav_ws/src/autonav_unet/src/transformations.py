@@ -82,7 +82,7 @@ class ImageTransformer(Node):
         image = cv2.transpose(image) / 255.0
         image = cv2.resize(image, (256, 256))
 
-        cv2.imshow("image", image)
+        # cv2.imshow("image", image)
         # cv2.waitKey()
         # cv2.destroyAllWindows()
 
@@ -96,12 +96,12 @@ class ImageTransformer(Node):
         # print()
 
         # self.get_logger().error(mask_.shape)
-        cv2.imshow("mask", mask_)
+        # cv2.imshow("mask", mask_)
 
         mask = cv2.transpose(mask_ * 255.0) # FIXME HACK BUG XXX TODO THIS LINE IS CAUSING ALL THE PROBLEMS
         mask = cv2.resize(mask, (640, 480))
 
-        cv2.imshow("mask2", mask)
+        # cv2.imshow("mask2", mask)
         # cv2.waitKey()
 
         #==========================================================
@@ -110,9 +110,9 @@ class ImageTransformer(Node):
 
         # preview_image = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
         preview_msg = g_bridge.cv2_to_compressed_imgmsg(mask)
-        image = g_bridge.compressed_imgmsg_to_cv2(preview_msg)
-        cv2.imshow("processed", image)
-        cv2.waitKey()
+        # image = g_bridge.compressed_imgmsg_to_cv2(preview_msg)
+        # cv2.imshow("processed", image)
+        # cv2.waitKey()
         preview_msg.header = image_.header #TODO FIXME
         preview_msg.format = "jpeg"
         self.filteredImagePublisher.publish(preview_msg)
