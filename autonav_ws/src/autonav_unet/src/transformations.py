@@ -55,6 +55,7 @@ class ImageTransformer(Node):
         return
 
     # flatten the image (convert it from 3d to 2d) so it's like we have a top-down view of the course in front of us
+    #TODO rewrite this code
     def flattenImage(self, img):
         top_left = (int)(img.shape[1] * 0.26), (int)(img.shape[0])
         top_right = (int)(img.shape[1] - img.shape[1] * 0.26), (int)(img.shape[0])
