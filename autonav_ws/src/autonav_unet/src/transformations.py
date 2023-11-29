@@ -37,8 +37,7 @@ class ImageTransformer(Node):
         super().__init__("autonav_vision_transformer")
 
         # Reload the unet model
-        #TODO figure out a way to not use absolute paths so it can run on things that aren't my laptop
-        self.model = tf.keras.models.load_model('/mnt/c/Users/isasq/Documents/GitHub/autonav_software_2023/autonav_ws/src/autonav_unet/src/results/SCRUNet_model.keras')
+        self.model = tf.keras.models.load_model('autonav_ws/src/autonav_unet/src/results/SCRUNet_model.keras')
 
 
     def configure(self):
@@ -63,11 +62,26 @@ class ImageTransformer(Node):
         bottom_right = (int)(img.shape[1]), 0
 
         src_pts = np.float32([[top_left], [top_right], [bottom_left], [bottom_right]])
-        dest_pts = np.float32([ [0, 480], [640, 480] ,[0, 0], [640, 0]])
+        dest_pts = np.float32([[0, 480],  [640, 480],  [0, 0],        [640, 0]])
 
         matrix = cv2.getPerspectiveTransform(dest_pts, src_pts)
         output = cv2.warpPerspective(img, matrix, (640, 480))
         return output
+
+    # def flattenImage(self, img):
+    #     offset = 270
+    #     top_left = (0+offset, 480)
+    #     top_right = (640-offset, 480)
+    #     bottom_left = (0, 0)
+    #     bottom_right = (640, 0)
+    
+    #     src_pts = np.float32([[top_left], [top_right], [bottom_left], [bottom_right]])
+    #     dest_pts = np.float32([[0, 480],  [640, 480],  [0+offset, 0],      [640-offset, 0]])
+    
+    #     matrix = cv2.getPerspectiveTransform(dest_pts, src_pts)
+    #     output = cv2.warpPerspective(img, matrix, (640, 480))
+    
+    #     return output
 
     # publish the occupancy map or something
     # idk what this does or how it does it I didn't write this code
@@ -113,7 +127,7 @@ class ImageTransformer(Node):
         width = mask.shape[1]
         region_of_disinterest_vertices=[
             (0, height),
-            (width / 2, height / 2 + 100),
+            (width / 2, height / 2 + 70),
             (width, height)
         ]
         mask = self.regionOfDisinterest(mask, np.array([region_of_disinterest_vertices], np.int32))
