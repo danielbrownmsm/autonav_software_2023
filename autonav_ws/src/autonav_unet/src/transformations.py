@@ -31,6 +31,23 @@ g_mapData.origin.position.y = -10.0
 
 MAP_RES = 80
 
+# image flattening constants calculations
+#TODO at some point we might not want these to be constant, but for now there's no need for them to be calculated every loop iteration/clutter the node class code
+offset = 270
+
+#TEMP FIXME
+top_left = (0+offset, 480)
+top_right = (640-offset, 480)
+bottom_left = (0, 0)
+bottom_right = (640, 0)
+
+# source points are just the four corners of the image
+src_pts = np.float32([[top_left], [top_right], [bottom_left], [bottom_right]])
+dest_pts = np.float32([[0, 480],  [640, 480],  [0+offset, 0],      [640-offset, 0]])
+
+# this is the actual thing we need to perform the flattening
+MATRIX = cv2.getPerspectiveTransform(dest_pts, src_pts)
+ 
 
 class ImageTransformer(Node):
     def __init__(self):
@@ -38,6 +55,9 @@ class ImageTransformer(Node):
 
         # Reload the unet model
         self.model = tf.keras.models.load_model('autonav_ws/src/autonav_unet/src/results/SCRUNet_model.keras')
+
+        #TEMP FIXME
+        self.framecount = 0
 
 
     def configure(self):
@@ -54,34 +74,8 @@ class ImageTransformer(Node):
         return
 
     # flatten the image (convert it from 3d to 2d) so it's like we have a top-down view of the course in front of us
-    #TODO rewrite this code
     def flattenImage(self, img):
-        top_left = (int)(img.shape[1] * 0.26), (int)(img.shape[0])
-        top_right = (int)(img.shape[1] - img.shape[1] * 0.26), (int)(img.shape[0])
-        bottom_left = 0, 0
-        bottom_right = (int)(img.shape[1]), 0
-
-        src_pts = np.float32([[top_left], [top_right], [bottom_left], [bottom_right]])
-        dest_pts = np.float32([[0, 480],  [640, 480],  [0, 0],        [640, 0]])
-
-        matrix = cv2.getPerspectiveTransform(dest_pts, src_pts)
-        output = cv2.warpPerspective(img, matrix, (640, 480))
-        return output
-
-    # def flattenImage(self, img):
-    #     offset = 270
-    #     top_left = (0+offset, 480)
-    #     top_right = (640-offset, 480)
-    #     bottom_left = (0, 0)
-    #     bottom_right = (640, 0)
-    
-    #     src_pts = np.float32([[top_left], [top_right], [bottom_left], [bottom_right]])
-    #     dest_pts = np.float32([[0, 480],  [640, 480],  [0+offset, 0],      [640-offset, 0]])
-    
-    #     matrix = cv2.getPerspectiveTransform(dest_pts, src_pts)
-    #     output = cv2.warpPerspective(img, matrix, (640, 480))
-    
-    #     return output
+        return cv2.warpPerspective(img, MATRIX, (640, 480)) # just let OpenCV work its magic.
 
     # publish the occupancy map or something
     # idk what this does or how it does it I didn't write this code
@@ -94,8 +88,16 @@ class ImageTransformer(Node):
 
     # main image callback, takes compressed image message from camera publisher
     def onImageReceived(self, image_: CompressedImage):
+        #temp FIXME
+        self.framecount += 1
+
         # Decompressify
         cv_image = g_bridge.compressed_imgmsg_to_cv2(image_)
+
+        #temp FIXME
+        if self.framecount == 10:
+            cv2.imwrite("./SIM_FRAME.png", cv_image)
+
 
         #======================================================
         # Histogram equalization of HSV value channel
